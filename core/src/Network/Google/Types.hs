@@ -176,7 +176,9 @@ _Default = iso f Just
     f (Just x) = x
     f Nothing  = mempty
 
-type Stream = ResumableSource (ResourceT IO) ByteString
+-- newtype SealedConduitT  i o m r = SealedConduitT (Pipe i i o () m r)
+--    data ResumableSource   m o   = esumableSource (Pipe () () o () m ()) (m ())
+type Stream = SealedConduitT () ByteString (ResourceT IO) ()
 
 data Error
     = TransportError HttpException
@@ -358,7 +360,7 @@ discard :: Method
         -> Request
         -> ServiceConfig
         -> Client ()
-discard = client (\b -> closeResumableSource b >> pure (Right ())) Nothing
+discard = client (const $ pure (Right ())) Nothing
 
 client :: (Stream -> ResourceT IO (Either (String, LBS.ByteString) a))
        -> Maybe MediaType
