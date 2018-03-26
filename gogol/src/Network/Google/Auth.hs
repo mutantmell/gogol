@@ -66,6 +66,7 @@ module Network.Google.Auth
     , Secret         (..)
     , ServiceId      (..)
     , ClientId       (..)
+    , AuthorizedUser (..)
 
     -- * Re-exported Modules
     , module Network.Google.Auth.Scope

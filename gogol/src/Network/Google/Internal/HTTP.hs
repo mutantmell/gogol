@@ -21,6 +21,7 @@ import           Control.Monad.IO.Class            (MonadIO)
 import           Control.Monad.Trans.Resource      (MonadResource (..))
 import qualified Data.ByteString.Lazy              as LBS
 import           Data.Conduit                      (($$+-))
+import qualified Data.Conduit                      as Conduit
 import qualified Data.Conduit.List                 as Conduit
 import           Data.Monoid                       (Dual (..), Endo (..), (<>))
 import qualified Data.Text.Encoding                as Text
@@ -63,12 +64,13 @@ perform Env{..} x = catches go handlers
         logDebug _envLogger rq -- debug:ClientRequest
 
         rs      <- http rq _envManager
+        let rs' = Conduit.sealConduitT <$> rs
 
         logDebug _envLogger rs -- debug:ClientResponse
 
-        statusCheck rs
+        statusCheck rs'
 
-        r       <- _cliResponse (responseBody rs)
+        r       <- _cliResponse (responseBody rs')
 
         pure $! case r of
             Right y       -> Right y
