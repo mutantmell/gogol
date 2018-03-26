@@ -119,6 +119,7 @@ import           Control.Exception.Lens
 import           Control.Monad
 import           Control.Monad.Base
 import           Control.Monad.Catch
+import           Control.Monad.IO.Unlift
 import           Control.Monad.Reader
 import qualified Control.Monad.RWS.Lazy         as LRW
 import qualified Control.Monad.RWS.Strict       as RW
@@ -155,7 +156,6 @@ newtype Google s a = Google { unGoogle :: ReaderT (Env s) (ResourceT IO) a }
         , MonadThrow
         , MonadCatch
         , MonadMask
-        , MonadBase IO
         , MonadReader (Env s)
         , MonadResource
         )
@@ -183,11 +183,8 @@ class ( Functor     m
 instance AllowScopes s => MonadGoogle s (Google s) where
     liftGoogle = id
 
-instance MonadBaseControl IO (Google s) where
-    type StM (Google s) a = StM (ReaderT (Env s) (ResourceT IO)) a
-
-    liftBaseWith f = Google $ liftBaseWith $ \g -> f (g . unGoogle)
-    restoreM       = Google . restoreM
+instance MonadUnliftIO (Google s) where
+    askUnliftIO = Google $ withUnliftIO $ \u -> pure (UnliftIO (unliftIO u . unGoogle))
 
 instance MonadGoogle s m => MonadGoogle s (IdentityT m) where
     liftGoogle = lift . liftGoogle
